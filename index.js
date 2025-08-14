@@ -97,14 +97,14 @@ async function main() {
 
   const model = modelMapping[argv.model] || argv.model;
 
-  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you. ${context}`;
+  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
 
-  const claudeCommand = `claude -p \"${modifiedQuery}\" --model ${model}`;
+  const claudeCommand = `claude -p "${modifiedQuery}" --model ${model}`;
 
   console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
 
   try {
-    const output = execSync(claudeCommand, { encoding: 'utf-8' });
+    const output = execSync(claudeCommand, { input: context, encoding: 'utf-8' });
     const commandMatch = output.match(/```bash\n([\s\S]*?)\n```/);
     const command = commandMatch ? commandMatch[1].trim() : null;
 
