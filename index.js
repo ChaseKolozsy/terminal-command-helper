@@ -38,11 +38,25 @@ if (!query) {
 let context = '';
 
 if (argv.context) {
-  const historyFile = path.join(os.homedir(), '.bash_history'); // a more robust solution is needed here
-  if (fs.existsSync(historyFile)) {
+  const shell = process.env.SHELL;
+  let historyFile;
+
+  if (shell.includes('zsh')) {
+    historyFile = path.join(os.homedir(), '.zsh_history');
+  } else if (shell.includes('bash')) {
+    historyFile = path.join(os.homedir(), '.bash_history');
+  } else if (shell.includes('fish')) {
+    historyFile = path.join(os.homedir(), '.local/share/fish/fish_history');
+  } else {
+    console.log(chalk.yellow('Could not determine shell type. Skipping history.'));
+  }
+
+  if (historyFile && fs.existsSync(historyFile)) {
     const history = fs.readFileSync(historyFile, 'utf-8').trim().split('\n');
     const lastLines = history.slice(-argv.lines).join('\n');
     context += `\n\n---\nTerminal History:\n${lastLines}`;
+  } else {
+    console.log(chalk.yellow('Could not find history file. Skipping history.'));
   }
 }
 
@@ -53,7 +67,7 @@ if (argv.files) {
 
 const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header ${context}`;
 
-const claudeCommand = `claude -p "${modifiedQuery}"`;
+const claudeCommand = `claude -p \"${modifiedQuery}\"`;
 
 console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
 
