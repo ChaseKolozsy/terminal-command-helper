@@ -26,6 +26,12 @@ const argv = yargs(hideBin(process.argv))
     type: 'boolean',
     description: 'Include the list of files and directories in the current directory as context'
   })
+  .option('model', {
+    alias: 'm',
+    type: 'string',
+    description: 'Specify the Claude model to use',
+    default: 'claude-3-5-haiku-20241022'
+  })
   .argv;
 
 const query = argv._.join(' ');
@@ -80,7 +86,7 @@ async function main() {
 
   const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header ${context}`;
 
-  const claudeCommand = `claude -p \"${modifiedQuery}\"`;
+  const claudeCommand = `claude -p \"${modifiedQuery}\" --model ${argv.model}`;
 
   console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
 
