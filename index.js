@@ -30,76 +30,90 @@ const argv = yargs(hideBin(process.argv))
 
 const query = argv._.join(' ');
 
-if (!query) {
-  console.log(chalk.red('Please provide a query. For example: ch view my docker containers'));
-  process.exit(1);
-}
+async function main() {
+  let context = '';
 
-let context = '';
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+  });
 
-if (argv.context) {
-  const shell = process.env.SHELL;
-  let historyFile;
-
-  if (shell.includes('zsh')) {
-    historyFile = path.join(os.homedir(), '.zsh_history');
-  } else if (shell.includes('bash')) {
-    historyFile = path.join(os.homedir(), '.bash_history');
-  } else if (shell.includes('fish')) {
-    historyFile = path.join(os.homedir(), '.local/share/fish/fish_history');
-  } else {
-    console.log(chalk.yellow('Could not determine shell type. Skipping history.'));
+  let pipedInput = '';
+  for await (const line of rl) {
+    pipedInput += line + '\n';
   }
 
-  if (historyFile && fs.existsSync(historyFile)) {
-    const history = fs.readFileSync(historyFile, 'utf-8').trim().split('\n');
-    const lastLines = history.slice(-argv.lines).join('\n');
-    context += `\n\n---\nTerminal History:\n${lastLines}`;
-  } else {
-    console.log(chalk.yellow('Could not find history file. Skipping history.'));
+  if (pipedInput) {
+    context += `\n\n---\nTerminal Output:\n${pipedInput}`;
   }
-}
 
-if (argv.files) {
-  const files = fs.readdirSync(process.cwd());
-  context += `\n\n---\nFiles in current directory:\n${files.join('\n')}`;
-}
+  if (argv.context) {
+    const shell = process.env.SHELL;
+    let historyFile;
 
-const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header ${context}`;
+    if (shell.includes('zsh')) {
+      historyFile = path.join(os.homedir(), '.zsh_history');
+    } else if (shell.includes('bash')) {
+      historyFile = path.join(os.homedir(), '.bash_history');
+    } else if (shell.includes('fish')) {
+      historyFile = path.join(os.homedir(), '.local/share/fish/fish_history');
+    } else {
+      console.log(chalk.yellow('Could not determine shell type. Skipping history.'));
+    }
 
-const claudeCommand = `claude -p \"${modifiedQuery}\"`;
+    if (historyFile && fs.existsSync(historyFile)) {
+      const history = fs.readFileSync(historyFile, 'utf-8').trim().split('\n');
+      const lastLines = history.slice(-argv.lines).join('\n');
+      context += `\n\n---\nTerminal History:\n${lastLines}`;
+    } else {
+      console.log(chalk.yellow('Could not find history file. Skipping history.'));
+    }
+  }
 
-console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
+  if (argv.files) {
+    const files = fs.readdirSync(process.cwd());
+    context += `\n\n---\nFiles in current directory:\n${files.join('\n')}`;
+  }
 
-try {
-  const output = execSync(claudeCommand, { encoding: 'utf-8' });
-  const commandMatch = output.match(/```bash\n([\s\S]*?)\n```/);
-  const command = commandMatch ? commandMatch[1].trim() : null;
+  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header ${context}`;
 
-  if (command) {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+  const claudeCommand = `claude -p \"${modifiedQuery}\"`;
 
-    console.log(chalk.cyan('Do you want to execute the following command?\n'));
-    console.log(chalk.greenBright(`  ${command}\n`));
+  console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
 
-    rl.question(chalk.cyan('(y/n) '), (answer) => {
-      if (answer.toLowerCase() === 'y') {
-        try {
-          console.log('\n');
-          const commandOutput = execSync(command, { stdio: 'inherit' });
-        } catch (error) {
-          console.error(chalk.red(`\nError executing command: ${error}`));
+  try {
+    const output = execSync(claudeCommand, { encoding: 'utf-8' });
+    const commandMatch = output.match(/```bash\n([\s\S]*?)\n```/);
+    const command = commandMatch ? commandMatch[1].trim() : null;
+
+    if (command) {
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+
+      console.log(chalk.cyan('Do you want to execute the following command?\n'));
+      console.log(chalk.greenBright(`  ${command}\n`));
+
+      rl.question(chalk.cyan('(y/n) '), (answer) => {
+        if (answer.toLowerCase() === 'y') {
+          try {
+            console.log('\n');
+            const commandOutput = execSync(command, { stdio: 'inherit' });
+          } catch (error) {
+            console.error(chalk.red(`\nError executing command: ${error}`));
+          }
         }
-      }
-      rl.close();
-    });
-  } else {
-    console.log(chalk.red("Could not find a command to execute."));
-  }
+        rl.close();
+      });
+    } else {
+      console.log(chalk.red("Could not find a command to execute."));
+    }
 
-} catch (error) {
-  console.error(chalk.red(`\nError executing command: ${error}`));
+  } catch (error) {
+    console.error(chalk.red(`\nError executing command: ${error}`));
+  }
 }
+
+main();
