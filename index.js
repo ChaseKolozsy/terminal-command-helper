@@ -124,13 +124,16 @@ async function main() {
         confirmationRl.question(chalk.cyan('(y/n) '),(answer) => {
           if (answer.toLowerCase() === 'y') {
             try {
-              console.log('\n');
+              console.log('
+');
               const commandOutput = execSync(command, { stdio: 'inherit' });
             } catch (error) {
-              console.error(chalk.red(`\nError executing command: ${error}`));
+              console.error(chalk.red(`
+Error executing command: ${error}`));
             }
           }
           confirmationRl.close();
+          process.exit(0);
         });
       }
     } else {
