@@ -92,7 +92,7 @@ async function main() {
 
   const model = modelMapping[argv.model] || argv.model;
 
-  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header ${context}`;
+  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. ${context}`;
 
   const claudeCommand = `claude -p \"${modifiedQuery}\" --model ${model}`;
 
