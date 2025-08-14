@@ -14,10 +14,12 @@ npm install -g .
 ch <your natural language query>
 ```
 
-### Piping Multiple Commands
+## Comparison to Cursor IDE's CMD+K
 
-To pipe the output of multiple commands to `ch`, you can group them using curly braces `{}` and separate them with semicolons `;`. This will execute the commands sequentially and pipe the combined output to `ch`.
-
-```bash
-{ ls; ls node_modules; } | ch "your query"
-```
+| Feature | Cursor IDE's CMD+K | `ch` |
+| :--- | :--- | :--- |
+| **Integration** | Tightly integrated into the IDE | Loosely integrated into the terminal |
+| **Context** | Full project context | Explicitly provided context |
+| **Functionality** | Code generation, refactoring, commands | Commands |
+| **Flexibility** | Less flexible | More flexible |
+| **Platform** | Cursor IDE only | Any terminal, any platform |
