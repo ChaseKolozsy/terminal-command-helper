@@ -12,7 +12,14 @@ import * as path from 'path';
 const modelMapping = {
   sonnet: 'claude-sonnet-4-20250514',
   opus: 'claude-opus-4-1-20250805',
-  haiku: 'claude-3-5-haiku-20241022'
+  haiku: 'claude-3-5-haiku-20241022',
+  qwen: 'qwen'  // Special mapping for Qwen
+};
+
+const qwenModels = {
+  'qwen-max': 'qwen-max',
+  'qwen-plus': 'qwen-plus',
+  'qwen-turbo': 'qwen-turbo'
 };
 
 const argv = yargs(hideBin(process.argv))
@@ -35,7 +42,7 @@ const argv = yargs(hideBin(process.argv))
   .option('model', {
     alias: 'm',
     type: 'string',
-    description: 'Specify the Claude model to use',
+    description: 'Specify the Claude or Qwen model to use',
     default: 'haiku'
   })
   .option('dry-run', {
@@ -95,16 +102,44 @@ async function main() {
     context += `\n\n---\nFiles in current directory:\n${files.join('\n')}`;
   }
 
-  const model = modelMapping[argv.model] || argv.model;
+  // Determine if we're using Qwen or Claude
+  const isQwen = argv.model === 'qwen' || Object.keys(qwenModels).includes(argv.model);
+  
+  // Get the appropriate model name
+  let model;
+  if (isQwen) {
+    model = qwenModels[argv.model] || 'qwen';
+  } else {
+    model = modelMapping[argv.model] || argv.model;
+  }
 
-  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
+  // Construct the appropriate query based on the model
+  let modifiedQuery;
+  if (isQwen) {
+    modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
+  } else {
+    modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
+  }
 
-  const claudeCommand = `claude -p "${modifiedQuery}" --model ${model}`;
+  // Construct the appropriate command based on the model
+  let commandToExecute;
+  if (isQwen) {
+    // For Qwen, don't include the model flag when recreating the code
+    commandToExecute = `qwen -p "${modifiedQuery}"`;
+  } else {
+    commandToExecute = `claude -p "${modifiedQuery}" --model ${model}`;
+  }
 
-  console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
+  console.log(chalk.yellow(`Executing command: ${commandToExecute}\n`));
 
   try {
-    const output = execSync(claudeCommand, { input: context, encoding: 'utf-8' });
+    let output;
+    if (isQwen) {
+      output = execSync(commandToExecute, { input: context, encoding: 'utf-8' });
+    } else {
+      output = execSync(commandToExecute, { input: context, encoding: 'utf-8' });
+    }
+    
     const commandMatch = output.match(/```bash\n([\s\S]*?)\n```/);
     const command = commandMatch ? commandMatch[1].trim() : null;
 
@@ -121,7 +156,7 @@ async function main() {
         console.log(chalk.cyan('Do you want to execute the following command?\n'));
         console.log(chalk.greenBright(`  ${command}\n`));
 
-        confirmationRl.question(chalk.cyan('(y/n) '),(answer) => {
+        confirmationRl.question(chalk.cyan('(y/n) '), (answer) => {
           if (answer.toLowerCase() === 'y') {
             try {
               console.log('\n');

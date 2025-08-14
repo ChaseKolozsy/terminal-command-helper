@@ -1,7 +1,7 @@
 {
   "name": "terminal-command-helper",
   "version": "1.0.0",
-  "description": "A CLI tool to get shell commands from natural language queries using Claude.",
+  "description": "A CLI tool to get shell commands from natural language queries using Claude or Qwen.",
   "main": "index.js",
   "type": "module",
   "scripts": {
