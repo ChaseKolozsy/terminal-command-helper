@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { exec } from 'child_process';
+import { execSync } from 'child_process';
 
 const query = process.argv.slice(2).join(' ');
 
@@ -11,16 +11,11 @@ if (!query) {
 
 const claudeCommand = `claude -p "${query}"`;
 
-exec(claudeCommand, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`exec error: ${error}`);
-    return;
-  }
+console.log(`Executing command: ${claudeCommand}`);
 
-  if (stderr) {
-    console.error(`stderr: ${stderr}`);
-    return;
-  }
-
-  console.log(stdout.trim());
-});
+try {
+  const output = execSync(claudeCommand, { encoding: 'utf-8' });
+  console.log(output.trim());
+} catch (error) {
+  console.error(`Error executing command: ${error}`);
+}
