@@ -40,8 +40,10 @@ async function main() {
   });
 
   let pipedInput = '';
-  for await (const line of rl) {
-    pipedInput += line + '\n';
+  if (!process.stdin.isTTY) {
+    for await (const line of rl) {
+      pipedInput += line + '\n';
+    }
   }
 
   if (pipedInput) {
@@ -88,15 +90,15 @@ async function main() {
     const command = commandMatch ? commandMatch[1].trim() : null;
 
     if (command) {
-      const rl = readline.createInterface({
-        input: process.stdin,
+      const confirmationRl = readline.createInterface({
+        input: fs.createReadStream('/dev/tty'),
         output: process.stdout
       });
 
       console.log(chalk.cyan('Do you want to execute the following command?\n'));
       console.log(chalk.greenBright(`  ${command}\n`));
 
-      rl.question(chalk.cyan('(y/n) '), (answer) => {
+      confirmationRl.question(chalk.cyan('(y/n) '), (answer) => {
         if (answer.toLowerCase() === 'y') {
           try {
             console.log('\n');
@@ -105,7 +107,7 @@ async function main() {
             console.error(chalk.red(`\nError executing command: ${error}`));
           }
         }
-        rl.close();
+        confirmationRl.close();
       });
     } else {
       console.log(chalk.red("Could not find a command to execute."));
