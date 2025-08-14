@@ -2,19 +2,20 @@
 
 import { execSync } from 'child_process';
 import * as readline from 'readline';
+import chalk from 'chalk';
 
 const query = process.argv.slice(2).join(' ');
 
 if (!query) {
-  console.log('Please provide a query. For example: ch view my docker containers');
+  console.log(chalk.red('Please provide a query. For example: ch view my docker containers'));
   process.exit(1);
 }
 
 const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header`;
 
-const claudeCommand = `claude -p "${modifiedQuery}"`;
+const claudeCommand = `claude -p \"${modifiedQuery}\"`;
 
-console.log(`Executing command: ${claudeCommand}`);
+console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
 
 try {
   const output = execSync(claudeCommand, { encoding: 'utf-8' });
@@ -26,21 +27,24 @@ try {
       output: process.stdout
     });
 
-    rl.question(`Execute the following command? (y/n) \n${command}\n`, (answer) => {
+    console.log(chalk.cyan('Do you want to execute the following command?\n'));
+    console.log(chalk.greenBright(`  ${command}\n`));
+
+    rl.question(chalk.cyan('(y/n) '), (answer) => {
       if (answer.toLowerCase() === 'y') {
         try {
-          const commandOutput = execSync(command, { encoding: 'utf-8' });
-          console.log(commandOutput.trim());
+          console.log('\n');
+          const commandOutput = execSync(command, { stdio: 'inherit' });
         } catch (error) {
-          console.error(`Error executing command: ${error}`);
+          console.error(chalk.red(`\nError executing command: ${error}`));
         }
       }
       rl.close();
     });
   } else {
-    console.log("Could not find a command to execute.");
+    console.log(chalk.red("Could not find a command to execute."));
   }
 
 } catch (error) {
-  console.error(`Error executing command: ${error}`);
+  console.error(chalk.red(`\nError executing command: ${error}`));
 }
