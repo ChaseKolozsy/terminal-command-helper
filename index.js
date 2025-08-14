@@ -38,6 +38,11 @@ const argv = yargs(hideBin(process.argv))
     description: 'Specify the Claude model to use',
     default: 'haiku'
   })
+  .option('dry-run', {
+    alias: 'd',
+    type: 'boolean',
+    description: 'Show the command that would be executed without actually executing it'
+  })
   .argv;
 
 const query = argv._.join(' ');
@@ -104,25 +109,30 @@ async function main() {
     const command = commandMatch ? commandMatch[1].trim() : null;
 
     if (command) {
-      const confirmationRl = readline.createInterface({
-        input: fs.createReadStream('/dev/tty'),
-        output: process.stdout
-      });
+      if (argv.dryRun) {
+        console.log(chalk.cyan('Command that would be executed:\n'));
+        console.log(chalk.greenBright(`  ${command}\n`));
+      } else {
+        const confirmationRl = readline.createInterface({
+          input: fs.createReadStream('/dev/tty'),
+          output: process.stdout
+        });
 
-      console.log(chalk.cyan('Do you want to execute the following command?\n'));
-      console.log(chalk.greenBright(`  ${command}\n`));
+        console.log(chalk.cyan('Do you want to execute the following command?\n'));
+        console.log(chalk.greenBright(`  ${command}\n`));
 
-      confirmationRl.question(chalk.cyan('(y/n) '), (answer) => {
-        if (answer.toLowerCase() === 'y') {
-          try {
-            console.log('\n');
-            const commandOutput = execSync(command, { stdio: 'inherit' });
-          } catch (error) {
-            console.error(chalk.red(`\nError executing command: ${error}`));
+        confirmationRl.question(chalk.cyan('(y/n) '),(answer) => {
+          if (answer.toLowerCase() === 'y') {
+            try {
+              console.log('\n');
+              const commandOutput = execSync(command, { stdio: 'inherit' });
+            } catch (error) {
+              console.error(chalk.red(`\nError executing command: ${error}`));
+            }
           }
-        }
-        confirmationRl.close();
-      });
+          confirmationRl.close();
+        });
+      }
     } else {
       console.log(chalk.red("Could not find a command to execute."));
     }
