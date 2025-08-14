@@ -1,6 +1,6 @@
 # Terminal Command Helper
 
-A CLI tool to get shell commands from natural language queries using Claude or Qwen.
+A CLI tool to get shell commands from natural language queries using Claude, Qwen, or Gemini.
 
 ## Installation
 
@@ -31,6 +31,14 @@ ch -m qwen <your natural language query>
 ch -m qwen-max <your natural language query>
 ch -m qwen-plus <your natural language query>
 ch -m qwen-turbo <your natural language query>
+```
+
+For Gemini models:
+```bash
+ch -m gemini <your natural language query>
+ch -m gemini-pro <your natural language query>
+ch -m gemini-ultra <your natural language query>
+ch -m gemini-flash <your natural language query>
 ```
 
 ## Comparison to Cursor IDE's CMD+K

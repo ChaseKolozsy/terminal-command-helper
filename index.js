@@ -13,13 +13,20 @@ const modelMapping = {
   sonnet: 'claude-sonnet-4-20250514',
   opus: 'claude-opus-4-1-20250805',
   haiku: 'claude-3-5-haiku-20241022',
-  qwen: 'qwen'  // Special mapping for Qwen
+  qwen: 'qwen',  // Special mapping for Qwen
+  gemini: 'gemini'  // Special mapping for Gemini
 };
 
 const qwenModels = {
   'qwen-max': 'qwen-max',
   'qwen-plus': 'qwen-plus',
   'qwen-turbo': 'qwen-turbo'
+};
+
+const geminiModels = {
+  'gemini-pro': 'gemini-pro',
+  'gemini-ultra': 'gemini-ultra',
+  'gemini-flash': 'gemini-flash'
 };
 
 const argv = yargs(hideBin(process.argv))
@@ -42,7 +49,7 @@ const argv = yargs(hideBin(process.argv))
   .option('model', {
     alias: 'm',
     type: 'string',
-    description: 'Specify the Claude or Qwen model to use',
+    description: 'Specify the Claude, Qwen, or Gemini model to use',
     default: 'haiku'
   })
   .option('dry-run', {
@@ -102,30 +109,31 @@ async function main() {
     context += `\n\n---\nFiles in current directory:\n${files.join('\n')}`;
   }
 
-  // Determine if we're using Qwen or Claude
+  // Determine if we're using Qwen, Gemini, or Claude
   const isQwen = argv.model === 'qwen' || Object.keys(qwenModels).includes(argv.model);
+  const isGemini = argv.model === 'gemini' || Object.keys(geminiModels).includes(argv.model);
   
   // Get the appropriate model name
   let model;
   if (isQwen) {
     model = qwenModels[argv.model] || 'qwen';
+  } else if (isGemini) {
+    model = geminiModels[argv.model] || 'gemini';
   } else {
     model = modelMapping[argv.model] || argv.model;
   }
 
   // Construct the appropriate query based on the model
-  let modifiedQuery;
-  if (isQwen) {
-    modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
-  } else {
-    modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
-  }
+  const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header. Do not execute the command, just supply it. Do not look at the repo in any way, just answer the question based on the context given to you.`;
 
   // Construct the appropriate command based on the model
   let commandToExecute;
   if (isQwen) {
     // For Qwen, don't include the model flag when recreating the code
     commandToExecute = `qwen -p "${modifiedQuery}"`;
+  } else if (isGemini) {
+    // For Gemini, don't include the model flag when recreating the code
+    commandToExecute = `gemini -p "${modifiedQuery}"`;
   } else {
     commandToExecute = `claude -p "${modifiedQuery}" --model ${model}`;
   }
@@ -133,13 +141,7 @@ async function main() {
   console.log(chalk.yellow(`Executing command: ${commandToExecute}\n`));
 
   try {
-    let output;
-    if (isQwen) {
-      output = execSync(commandToExecute, { input: context, encoding: 'utf-8' });
-    } else {
-      output = execSync(commandToExecute, { input: context, encoding: 'utf-8' });
-    }
-    
+    const output = execSync(commandToExecute, { input: context, encoding: 'utf-8' });
     const commandMatch = output.match(/```bash\n([\s\S]*?)\n```/);
     const command = commandMatch ? commandMatch[1].trim() : null;
 
