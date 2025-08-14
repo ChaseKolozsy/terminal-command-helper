@@ -14,8 +14,10 @@ npm install -g .
 ch <your natural language query>
 ```
 
-### Example
+### Piping Multiple Commands
+
+To pipe the output of multiple commands to `ch`, you can group them using curly braces `{}` and separate them with semicolons `;`. This will execute the commands sequentially and pipe the combined output to `ch`.
 
 ```bash
-ch view my docker containers
+{ ls; ls node_modules; } | ch "your query"
 ```
