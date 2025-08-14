@@ -9,6 +9,12 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
+const modelMapping = {
+  sonnet: 'claude-sonnet-4-20250514',
+  opus: 'claude-opus-4-1-20250805',
+  haiku: 'claude-3-5-haiku-20241022'
+};
+
 const argv = yargs(hideBin(process.argv))
   .option('context', {
     alias: 'c',
@@ -30,7 +36,7 @@ const argv = yargs(hideBin(process.argv))
     alias: 'm',
     type: 'string',
     description: 'Specify the Claude model to use',
-    default: 'claude-3-5-haiku-20241022'
+    default: 'haiku'
   })
   .argv;
 
@@ -84,9 +90,11 @@ async function main() {
     context += `\n\n---\nFiles in current directory:\n${files.join('\n')}`;
   }
 
+  const model = modelMapping[argv.model] || argv.model;
+
   const modifiedQuery = `${query}, just give the command, no commentary, inside of triple backticks and a bash header ${context}`;
 
-  const claudeCommand = `claude -p \"${modifiedQuery}\" --model ${argv.model}`;
+  const claudeCommand = `claude -p \"${modifiedQuery}\" --model ${model}`;
 
   console.log(chalk.yellow(`Executing command: ${claudeCommand}\n`));
 
