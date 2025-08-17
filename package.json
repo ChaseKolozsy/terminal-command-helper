@@ -10,8 +10,18 @@
   "bin": {
     "ch": "./index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "cli",
+    "terminal",
+    "command",
+    "helper",
+    "ai",
+    "claude",
+    "qwen",
+    "gemini",
+    "natural-language"
+  ],
+  "author": "neweyesiss",
   "license": "ISC",
   "dependencies": {
     "chalk": "^5.5.0",
